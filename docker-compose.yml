@@ -1,0 +1,63 @@
+version: "3.9"
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: clinic-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=clinic
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Cloud Config Server
+  config-server:
+    build: ./config-server
+    container_name: clinic-config-server
+    depends_on:
+      - mysql    # (Config Server doesn't need the DB, but listing for startup order)
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./config-repo:/config-repo:ro   # Mount the config repository into the container
+    environment:
+      - GIT_TERMINAL_PROMPT=0  # Prevent Git from asking for creds (not needed for local)
+    # The config server will automatically pick up the files from /config-repo due to our application.yml settings.
+
+  # Eureka Discovery Server
+  discovery-server:
+    build: ./discovery-server
+    container_name: clinic-discovery-server
+    depends_on:
+      - config-server   # Ensure config server is up (though discovery doesn't use it, we want it ready for others)
+    ports:
+      - "8761:8761"
+    # The discovery server will use its own application.yml; no special environment needed.
+
+  # Doctor Service
+  doctor-service:
+    build: ./doctor-service
+    container_name: clinic-doctor-service
+    depends_on:
+      - config-server    # needs config server available at startup
+      - discovery-server # needs Eureka available to register
+      - mysql            # needs database available
+    ports:
+      - "8081:8081"
+    # No explicit environment variables; uses Config Server for configuration.
+
+  # Patient Service
+  patient-service:
+    build: ./patient-service
+    container_name: clinic-patient-service
+    depends_on:
+      - config-server
+      - discovery-server
+      - mysql
+    ports:
+      - "8082:8082"

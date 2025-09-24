@@ -1,0 +1,21 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        git:
+          uri: ${SPRING_CLOUD_CONFIG_SERVER_GIT_URI:https://github.com/Reema-murthy/clinic-config.git}
+          default-label: ${SPRING_CLOUD_CONFIG_SERVER_GIT_LABEL:main}
+          clone-on-start: true
+          # username: ${SPRING_CLOUD_CONFIG_SERVER_GIT_USERNAME:}
+          # password: ${SPRING_CLOUD_CONFIG_SERVER_GIT_PASSWORD:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

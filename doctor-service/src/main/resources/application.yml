@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: doctor-service
+  config:
+    import: "optional:configserver:${CONFIG_SERVER_URL:http://config-server:8888/}"
+  datasource:
+    url: ${DB_URL:jdbc:mysql://mysql:3306/clinic}
+    username: ${DB_USER:root}
+    password: ${DB_PASS:password}
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+server:
+  port: ${PORT:8081}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://discovery-server:8761/eureka/}
