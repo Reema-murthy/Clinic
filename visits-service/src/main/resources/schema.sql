@@ -1,0 +1,11 @@
+CREATE DATABASE IF NOT EXISTS clinic;
+
+USE clinic;
+
+CREATE TABLE IF NOT EXISTS visits (
+  id INT(4) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  patient_id INT NOT NULL,
+  visit_date DATE,
+  description VARCHAR(8192),
+  FOREIGN KEY (patient_id) REFERENCES patients(id)
+) ENGINE=InnoDB;
