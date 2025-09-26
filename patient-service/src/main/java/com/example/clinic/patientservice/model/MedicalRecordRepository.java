@@ -1,10 +1,10 @@
 package com.example.clinic.patientservice.model;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.util.List;
 
 /**
  * Repository interface for <code>MedicalRecord</code> domain objects.
@@ -27,4 +27,6 @@ public interface MedicalRecordRepository extends JpaRepository<MedicalRecord, In
      */
     @Query("SELECT DISTINCT m.recordType FROM MedicalRecord m ORDER BY m.recordType")
     List<String> findRecordTypes();
+
+    List<MedicalRecord> findByPatient_Id(int patientId);
 }

@@ -1,14 +1,25 @@
 package com.example.clinic.patientservice.controller;
 
-import io.micrometer.core.annotation.Timed;
-import jakarta.validation.constraints.Min;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import com.example.clinic.patientservice.model.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.example.clinic.patientservice.model.MedicalRecord;
+import com.example.clinic.patientservice.model.MedicalRecordRepository;
+import com.example.clinic.patientservice.model.Patient;
+import com.example.clinic.patientservice.model.PatientRepository;
+
+import io.micrometer.core.annotation.Timed;
+import jakarta.validation.constraints.Min;
 
 /**
  * REST Controller for Medical Records
@@ -62,6 +73,15 @@ class MedicalRecordResource {
         log.info("Saving medical record {}", record);
         return medicalRecordRepository.save(record);
     }
+
+    @GetMapping("/patients/{patientId}/records")
+    public List<MedicalRecord> listRecords(@PathVariable("patientId") @Min(1) int patientId) {
+        // Optional: ensure patient exists
+        patientRepository.findById(patientId)
+            .orElseThrow(() -> new ResourceNotFoundException("Patient " + patientId + " not found"));
+        return medicalRecordRepository.findByPatientId(patientId);
+    }
+
 
     @GetMapping("/patients/*/records/{recordId}")
 public MedicalRecord findRecord(@PathVariable("recordId") int recordId) {
