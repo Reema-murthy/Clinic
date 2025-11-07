@@ -1,4 +1,4 @@
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jdk-jammy
 
 # Expose the port that the Doctor Service will run on (configured via config server)
 EXPOSE 8081

@@ -39,6 +39,19 @@ services:
       - "8761:8761"
     # The discovery server will use its own application.yml; no special environment needed.
 
+  # API Gateway
+  api-gateway:
+    build: ./api-gateway
+    container_name: clinic-api-gateway
+    depends_on:
+      - config-server
+      - discovery-server
+    ports:
+      - "8080:8080"
+    environment:
+      - CONFIG_SERVER_URL=http://config-server:8888/
+      - EUREKA_URL=http://discovery-server:8761/eureka/
+
   # Doctor Service
   doctor-service:
     build: ./doctor-service

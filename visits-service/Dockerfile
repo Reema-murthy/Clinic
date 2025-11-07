@@ -1,4 +1,4 @@
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jdk-jammy
 EXPOSE 8083
 RUN apt-get update && apt-get install -y default-mysql-client
 COPY target/visits-service-0.0.1-SNAPSHOT.jar /app/visits-service.jar

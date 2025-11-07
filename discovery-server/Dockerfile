@@ -1,5 +1,5 @@
 # Use an OpenJDK 17 runtime image
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jdk-jammy
 # Expose Eureka Server port
 EXPOSE 8761
 # Add the service's JAR (built by Maven) into the container

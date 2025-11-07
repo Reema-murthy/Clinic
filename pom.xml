@@ -25,6 +25,8 @@
         <module>config-server</module>
         <module>doctor-service</module>
         <module>patient-service</module>
+        <module>visits-service</module>
+        <module>api-gateway</module>
     </modules>
 
     <properties>
