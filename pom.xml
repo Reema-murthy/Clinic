@@ -27,6 +27,7 @@
         <module>patient-service</module>
         <module>visits-service</module>
         <module>api-gateway</module>
+        <module>gen-ai-service</module>
     </modules>
 
     <properties>

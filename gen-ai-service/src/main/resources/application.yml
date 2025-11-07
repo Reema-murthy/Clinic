@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: gen-ai-service
+  config:
+    import: "optional:configserver:${CONFIG_SERVER_URL:http://config-server:8888/}"
+
+server:
+  port: ${PORT:8084}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://discovery-server:8761/eureka/}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: gen-ai-service
+

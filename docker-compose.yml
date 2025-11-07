@@ -88,3 +88,16 @@ services:
       - discovery-server
     ports:
      - 8083:8083
+
+  # Gen-AI Service
+  gen-ai-service:
+    build: ./gen-ai-service
+    container_name: clinic-gen-ai-service
+    depends_on:
+      - config-server
+      - discovery-server
+    ports:
+      - "8084:8084"
+    environment:
+      - CONFIG_SERVER_URL=http://config-server:8888/
+      - EUREKA_URL=http://discovery-server:8761/eureka/

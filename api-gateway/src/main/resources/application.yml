@@ -28,6 +28,12 @@ spring:
             - Path=/api/v1/visits/**
           filters:
             - StripPrefix=2
+        - id: gen-ai-service
+          uri: lb://gen-ai-service
+          predicates:
+            - Path=/api/v1/ai/**
+          filters:
+            - StripPrefix=2
 
 server:
   port: ${PORT:8080}
