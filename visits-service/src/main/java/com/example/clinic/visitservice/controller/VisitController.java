@@ -17,11 +17,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+
 
 /**
  * REST Controller for Visits connected to Patients.
  */
 @RestController
+@RequestMapping("/visits")
 @Timed("clinic.visit")
 class VisitResource {
 
@@ -36,7 +39,7 @@ class VisitResource {
     /**
      * Create a new visit for a patient.
      */
-    @PostMapping("patients/{patientId}/visits")
+    @PostMapping("/patients/{patientId}")
     @ResponseStatus(HttpStatus.CREATED)
     public Visit create(
         @Valid @RequestBody Visit visit,
@@ -47,14 +50,14 @@ class VisitResource {
         return visitRepository.save(visit);
     }
 
-    @GetMapping("/visits")
+    @GetMapping
         public List<Visit> readAll() {
         return visitRepository.findAll();
     }
     /**
      * Get all visits for a single patient.
      */
-    @GetMapping("patients/{patientId}/visits")
+    @GetMapping("patients/{patientId}")
     public List<Visit> read(@PathVariable("patientId") @Min(1) int patientId) {
         return visitRepository.findByPatientId(patientId);
     }
@@ -62,7 +65,7 @@ class VisitResource {
     /**
      * Get visits for multiple patients.
      */
-    @GetMapping("patients/visits")
+    @GetMapping("patients")
     public Visits read(@RequestParam("patientId") List<Integer> patientIds) {
         final List<Visit> byPatientIdIn = visitRepository.findByPatientIdIn(patientIds);
         return new Visits(byPatientIdIn);
