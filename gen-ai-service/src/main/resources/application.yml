@@ -3,6 +3,13 @@ spring:
     name: gen-ai-service
   config:
     import: "optional:configserver:${CONFIG_SERVER_URL:http://config-server:8888/}"
+  ai:
+    openai:
+      api-key: AIzaSyADSeCUJfseKuEYguM9SdM3CGZX8o7CS0o
+      base-url: https://generativelanguage.googleapis.com/v1beta/openai/
+      chat:
+        options:
+          model: models/gemini-2.5-flash
 
 server:
   port: ${PORT:8084}
@@ -12,12 +19,4 @@ eureka:
     service-url:
       defaultZone: ${EUREKA_URL:http://discovery-server:8761/eureka/}
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-  metrics:
-    tags:
-      application: gen-ai-service
 

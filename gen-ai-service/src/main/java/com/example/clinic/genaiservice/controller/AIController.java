@@ -1,78 +1,55 @@
 package com.example.clinic.genaiservice.controller;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/ai")
 public class AIController {
 
-    @PostMapping("/diagnosis/suggestions")
-    public ResponseEntity<Map<String, Object>> getDiagnosisSuggestions(
-            @Valid @RequestBody DiagnosisRequest request) {
+    @Autowired
+    private ChatClient chatClient; // Spring AI auto-configures this
+
+    // --- PASTE THE SYSTEM PROMPT FROM STEP 1 HERE ---
+    private final String systemPrompt = """
+        You are "Doc-Assistant," a helpful AI guide for general medical information.
+        Your persona is caring, professional, and easy to understand.
         
-        Map<String, Object> response = new HashMap<>();
-        response.put("suggestions", "AI-powered diagnostic suggestions based on symptoms: " + request.symptoms());
-        response.put("confidence", 0.85);
-        response.put("recommendedTests", new String[]{"Blood Test", "X-Ray"});
-        response.put("message", "This is a placeholder response. Integrate with actual AI service for production.");
+        **Your Role:**
+        * You can answer questions about general medical conditions, common treatments,
+          and medications based on your general knowledge.
+        * You can explain what symptoms *might* mean in general terms.
+
+        **Core Rules - YOU MUST FOLLOW THESE:**
+        1.  **NEVER Diagnose:** Do not, under any circumstances, tell a user they *have*
+            a specific condition. Instead of "You have the flu," say "Fever and aches
+            are common symptoms of viral infections like the flu."
+        2.  **NEVER Prescribe:** Do not "prescribe" or recommend specific dosages of
+            medication. You can state what a medication is *commonly used for*
+            (e.g., "Ibuprofen is commonly used to reduce fever and inflammation").
+        3.  **State Limitations:** If you don't know something, or if the question is too
+            specific for a diagnosis, state that you cannot answer it and that a doctor must.
+        4.  **ALWAYS Include Disclaimer:** Every single response MUST end with the following
+            mandatory disclaimer.
+
+        **Mandatory Disclaimer (Include in every response):**
+
+        > ---
+        > **Disclaimer:** I am an AI assistant, not a medical professional. This information
+        > is for informational purposes only and is **not** a substitute for professional
+        > medical advice, diagnosis, or treatment. **Please consult with a qualified
+        > healthcare provider** for any health concerns or before making any medical decisions.
+        """;
+
+    @GetMapping("/ask")
+    public String ask(@RequestParam String question) {
         
-        return ResponseEntity.ok(response);
+        // This is the simplest way to call the AI
+        return chatClient.prompt()
+            .system(systemPrompt) // Apply your rules every time
+            .user(question)       // Add the user's question
+            .call()
+            .content(); // Get the text response
     }
-
-    @PostMapping("/treatment/recommendations")
-    public ResponseEntity<Map<String, Object>> getTreatmentRecommendations(
-            @Valid @RequestBody TreatmentRequest request) {
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("recommendations", "AI-generated treatment plan for: " + request.diagnosis());
-        response.put("medications", new String[]{"Medication A", "Medication B"});
-        response.put("duration", "2 weeks");
-        response.put("message", "This is a placeholder response. Integrate with actual AI service for production.");
-        
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/documents/summarize")
-    public ResponseEntity<Map<String, Object>> summarizeDocument(
-            @Valid @RequestBody DocumentRequest request) {
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("summary", "AI-generated summary of the medical document");
-        response.put("keyPoints", new String[]{"Point 1", "Point 2", "Point 3"});
-        response.put("message", "This is a placeholder response. Integrate with actual AI service for production.");
-        
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/health")
-    public ResponseEntity<Map<String, String>> health() {
-        Map<String, String> response = new HashMap<>();
-        response.put("status", "UP");
-        response.put("service", "gen-ai-service");
-        return ResponseEntity.ok(response);
-    }
-
-    // Request DTOs
-    public record DiagnosisRequest(
-            @NotBlank String symptoms,
-            String patientHistory
-    ) {}
-
-    public record TreatmentRequest(
-            @NotBlank String diagnosis,
-            String patientId
-    ) {}
-
-    public record DocumentRequest(
-            @NotBlank String documentText,
-            String documentType
-    ) {}
 }
-
