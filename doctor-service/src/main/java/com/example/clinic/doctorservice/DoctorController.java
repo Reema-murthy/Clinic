@@ -55,13 +55,13 @@ public class DoctorController {
 
     // UPDATE (full)
     @PutMapping("/doctors/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void update(@PathVariable @Min(1) int id, @Valid @RequestBody DoctorRequest req) {
-        doctor d = docRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Doctor " + id + " not found"));
-        apply(d, req);
-        docRepository.save(d);
-    }
+    public ResponseEntity<doctor> update(@PathVariable @Min(1) int id, @Valid @RequestBody DoctorRequest req) {
+    doctor d = docRepository.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Doctor " + id + " not found"));
+    apply(d, req);
+    d = docRepository.save(d);
+    return ResponseEntity.ok(d);
+}
 
     /** copy fields from request to entity */
     private void apply(doctor d, DoctorRequest req) {

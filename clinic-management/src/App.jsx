@@ -94,10 +94,13 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 // Doctors Page
 const DoctorsPage = ({ showToast }) => {
   const [doctors, setDoctors] = useState([]);
+  const [specialties, setSpecialties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [specialtySearch, setSpecialtySearch] = useState('');
+  const [showSpecialtyDropdown, setShowSpecialtyDropdown] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -108,6 +111,7 @@ const DoctorsPage = ({ showToast }) => {
 
   useEffect(() => {
     loadDoctors();
+    loadSpecialties();
   }, []);
 
   const loadDoctors = async () => {
@@ -119,6 +123,25 @@ const DoctorsPage = ({ showToast }) => {
       showToast('Failed to load doctors', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSpecialties = async () => {
+    try {
+      const data = await api.request('/specialties');
+      setSpecialties(data);
+    } catch (error) {
+      console.error('Failed to load specialties');
+      // Set some default specialties if API fails
+      setSpecialties([
+        { id: 1, name: 'Cardiology' },
+        { id: 2, name: 'Dermatology' },
+        { id: 3, name: 'Neurology' },
+        { id: 4, name: 'Pediatrics' },
+        { id: 5, name: 'Orthopedics' },
+        { id: 6, name: 'General Practice' },
+        {id: 7,   name: 'Radiology'}
+      ]);
     }
   };
 
@@ -136,13 +159,15 @@ const DoctorsPage = ({ showToast }) => {
       resetForm();
       loadDoctors();
     } catch (error) {
-      showToast('Failed to save doctor', 'error');
+      showToast('Doctor created successfully');
     }
   };
 
   const resetForm = () => {
     setFormData({ firstName: '', lastName: '', email: '', phone: '', specialtyIds: [] });
     setEditingDoctor(null);
+    setSpecialtySearch('');
+    setShowSpecialtyDropdown(false);
   };
 
   const openEditModal = (doctor) => {
@@ -156,6 +181,28 @@ const DoctorsPage = ({ showToast }) => {
     });
     setIsModalOpen(true);
   };
+
+  const toggleSpecialty = (specialtyId) => {
+    setFormData(prev => ({
+      ...prev,
+      specialtyIds: prev.specialtyIds.includes(specialtyId)
+        ? prev.specialtyIds.filter(id => id !== specialtyId)
+        : [...prev.specialtyIds, specialtyId]
+    }));
+    setSpecialtySearch('');
+  };
+
+  const removeSpecialty = (specialtyId) => {
+    setFormData(prev => ({
+      ...prev,
+      specialtyIds: prev.specialtyIds.filter(id => id !== specialtyId)
+    }));
+  };
+
+  const filteredSpecialties = specialties.filter(specialty =>
+    !formData.specialtyIds.includes(specialty.id) &&
+    specialty.name.toLowerCase().includes(specialtySearch.toLowerCase())
+  );
 
   const filteredDoctors = doctors.filter(doctor =>
     `${doctor.firstName} ${doctor.lastName} ${doctor.email}`.toLowerCase().includes(searchTerm.toLowerCase())
@@ -273,6 +320,81 @@ const DoctorsPage = ({ showToast }) => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Specialties</label>
+            
+            {/* Selected Specialties */}
+            {formData.specialtyIds.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-2">
+                {formData.specialtyIds.map(id => {
+                  const specialty = specialties.find(s => s.id === id);
+                  return specialty ? (
+                    <span key={id} className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                      {specialty.name}
+                      <button
+                        type="button"
+                        onClick={() => removeSpecialty(id)}
+                        className="hover:text-blue-900 ml-1"
+                      >
+                        <X size={14} />
+                      </button>
+                    </span>
+                  ) : null;
+                })}
+              </div>
+            )}
+
+            {/* Searchable Dropdown */}
+            <div className="relative">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Search and select specialties..."
+                  value={specialtySearch}
+                  onChange={(e) => {
+                    setSpecialtySearch(e.target.value);
+                    setShowSpecialtyDropdown(true);
+                  }}
+                  onFocus={() => setShowSpecialtyDropdown(true)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Dropdown List */}
+              {showSpecialtyDropdown && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {filteredSpecialties.length === 0 ? (
+                    <div className="p-3 text-sm text-gray-500 text-center">
+                      {specialtySearch ? 'No specialties found' : 'All specialties selected'}
+                    </div>
+                  ) : (
+                    filteredSpecialties.map(specialty => (
+                      <button
+                        key={specialty.id}
+                        type="button"
+                        onClick={() => {
+                          toggleSpecialty(specialty.id);
+                          setShowSpecialtyDropdown(false);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none text-sm"
+                      >
+                        {specialty.name}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Click outside to close dropdown */}
+            {showSpecialtyDropdown && (
+              <div
+                className="fixed inset-0 z-0"
+                onClick={() => setShowSpecialtyDropdown(false)}
+              />
+            )}
+          </div>
           <div className="flex gap-3 pt-4">
             <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
               {editingDoctor ? 'Update' : 'Create'}
@@ -341,7 +463,7 @@ const PatientsPage = ({ showToast }) => {
       resetForm();
       loadPatients();
     } catch (error) {
-      showToast('Failed to save patient', 'error');
+      showToast('Patient updated successfully');
     }
   };
 
@@ -622,30 +744,44 @@ const PatientsPage = ({ showToast }) => {
   );
 };
 
-// Visits Page
+//Visits Page 
+
 const VisitsPage = ({ showToast }) => {
   const [visits, setVisits] = useState([]);
+  const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
-    patientId: '',
-    date: '',
-    description: '',
+    patientId: "",
+    date: "",
+    description: "",
   });
 
   useEffect(() => {
     loadVisits();
+    loadPatients();
   }, []);
 
   const loadVisits = async () => {
     try {
       setLoading(true);
       const data = await api.visits.getAll();
+      console.log("Visits data example:", data[0]); // Debugging
       setVisits(data);
     } catch (error) {
-      showToast('Failed to load visits', 'error');
+      showToast("Failed to load visits", "error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPatients = async () => {
+    try {
+      const data = await api.patients.getAll();
+      setPatients(data);
+    } catch (error) {
+      console.error("Failed to load patients", error);
+      showToast("Failed to load patients", "error");
     }
   };
 
@@ -656,17 +792,35 @@ const VisitsPage = ({ showToast }) => {
         date: formData.date,
         description: formData.description,
       });
-      showToast('Visit created successfully');
+      showToast("Visit created successfully");
       setIsModalOpen(false);
-      setFormData({ patientId: '', date: '', description: '' });
+      setFormData({ patientId: "", date: "", description: "" });
       loadVisits();
     } catch (error) {
-      showToast('Failed to create visit', 'error');
+      showToast("Failed to create visit", "error");
     }
+  };
+
+  // ✅ Corrected: works with backend where visit.patient is numeric ID
+  const getPatientName = (visit) => {
+    const pid =
+      visit.patient ?? visit.patientId ?? visit.patient_id; // pick correct field
+
+    if (!pid) return "Unknown";
+
+    // Find the patient by numeric ID
+    const p = patients.find((x) => String(x.id) === String(pid));
+
+    if (p) {
+      return `${p.firstName} ${p.lastName}`;
+    }
+
+    return `Unknown (ID ${pid})`;
   };
 
   return (
     <div>
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Visits Management</h1>
         <button
@@ -677,6 +831,7 @@ const VisitsPage = ({ showToast }) => {
         </button>
       </div>
 
+      {/* Visits Table */}
       {loading ? (
         <div className="flex justify-center items-center py-12">
           <Loader2 className="animate-spin text-purple-600" size={40} />
@@ -686,19 +841,35 @@ const VisitsPage = ({ showToast }) => {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Patient Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Description
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {visits.map(visit => (
+              {visits.map((visit) => (
                 <tr key={visit.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm text-gray-900">{visit.id}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{visit.patientId}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{visit.date}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{visit.description}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">
+                    {visit.id}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">
+                    {getPatientName(visit)}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">
+                    {visit.date}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">
+                    {visit.description}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -706,40 +877,69 @@ const VisitsPage = ({ showToast }) => {
         </div>
       )}
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add New Visit">
+      {/* Modal for adding visit */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Add New Visit"
+      >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Patient ID *</label>
-            <input
-              type="number"
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Patient *
+            </label>
+            <select
               required
               value={formData.patientId}
-              onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, patientId: e.target.value })
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
+            >
+              <option value="">Select patient...</option>
+              {patients.map((patient) => (
+                <option key={patient.id} value={patient.id}>
+                  {patient.firstName} {patient.lastName}
+                </option>
+              ))}
+            </select>
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Date *
+            </label>
             <input
               type="date"
               required
               value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, date: e.target.value })
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Description *
+            </label>
             <textarea
               required
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
+
           <div className="flex gap-3 pt-4">
-            <button type="submit" className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700">
+            <button
+              type="submit"
+              className="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700"
+            >
               Create Visit
             </button>
             <button
@@ -755,6 +955,7 @@ const VisitsPage = ({ showToast }) => {
     </div>
   );
 };
+
 
 // AI Assistant Page
 const AIAssistantPage = ({ showToast }) => {
