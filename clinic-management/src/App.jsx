@@ -16,17 +16,24 @@ const api = {
           ...options.headers,
         },
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
+      // 👇 NEW: handle empty body / non-JSON
+      const contentType = response.headers.get('content-type') || '';
+      if (response.status === 204 || !contentType.includes('application/json')) {
+        return null;   // nothing to parse, but still success
+      }
+
       return await response.json();
     } catch (error) {
       console.error('API Error:', error);
       throw error;
     }
   },
+
 
   doctors: {
     getAll: () => api.request('/doctors'),
@@ -126,6 +133,13 @@ const DoctorsPage = ({ showToast }) => {
     }
   };
 
+  const SPECIALTIES = [
+  { id: 1, name: 'Radiology' },
+  { id: 2, name: 'Surgery' },
+  { id: 3, name: 'Dentistry' },
+];
+
+
   const loadSpecialties = async () => {
     try {
       const data = await api.request('/specialties');
@@ -134,13 +148,9 @@ const DoctorsPage = ({ showToast }) => {
       console.error('Failed to load specialties');
       // Set some default specialties if API fails
       setSpecialties([
-        { id: 1, name: 'Cardiology' },
-        { id: 2, name: 'Dermatology' },
-        { id: 3, name: 'Neurology' },
-        { id: 4, name: 'Pediatrics' },
-        { id: 5, name: 'Orthopedics' },
-        { id: 6, name: 'General Practice' },
-        {id: 7,   name: 'Radiology'}
+        { id: 1, name: 'Radiology' },
+        { id: 2, name: 'Surgery' },
+        { id: 3, name: 'Dentistry' }
       ]);
     }
   };
